@@ -3,7 +3,6 @@ import random
 
 balance = 1000  # the current balance one has
 bet = 0  # the current bet one has placed
-round = 0  # the amount of rounds
 cards = []  # card deck is refreshed every round and stored so we don't have duplicates.
 ranks = ["Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Jack", "Queen", "King", "Ace"]
 suits = ["Spades", "Hearts", "Diamonds", "Clubs"]  # categories
@@ -21,7 +20,6 @@ def make_bet():  # betting function.
 
 def refresh_deck():
     # Add the numbered ranks before the special ranks
-
     cards = []
     for i in suits:  # four different sets
         for j in ranks:
@@ -32,9 +30,8 @@ def refresh_deck():
     cpu = []
 
 
-def new_round():
-    round += 1
-    print("Round " + str(round))
+def new_round(rounds):
+    print("Round " + str(rounds))
     make_bet()
     refresh_deck()
     new_card()
@@ -47,8 +44,10 @@ def new_card():
 
 
 def main():
+    rounds = 0  # rounds elapsed
     while True:
-        new_round()
+        new_round(rounds)
+        rounds += 1
 
 
 if __name__ == "__main__":
