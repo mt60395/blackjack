@@ -9,9 +9,10 @@ rank_values = [2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 10, 10, 11]
 suits = ["Spades", "Hearts", "Diamonds", "Clubs"]  # categories
 
 player = []  # to store the current hand's cards
-cpu = []  # to store the cpu's cards. it's a 1v1
+dealer = []  # to store the cpu's cards. it's a 1v1
+dealer_hidden = []  # unsure @TODO might not need later?
 player_score = 0  # current scores
-cpu_score = 0
+dealer_score = 0
 
 
 def make_bet():  # betting function.
@@ -49,15 +50,18 @@ def refresh_deck():
             cards.append(j + " of " + i)
     print("DEBUGGING | length: " + str(len(cards)))
 
-    global player, cpu
+    global player, dealer
     player = []
-    cpu = []
+    dealer = []
 
 
-def new_round(rounds):
+def new_round(rounds):  # main logic
     print("Round " + str(rounds))
     make_bet()
     refresh_deck()
+    new_card(player)
+    new_card(dealer)
+    new_card(dealer_hidden)
     new_card(player)
 
     ace_value = -1
@@ -69,23 +73,42 @@ def new_round(rounds):
             ace_value = 11
     rank_values[len(rank_values) - 1] = ace_value  # set the new ace value
 
-    global player_score, cpu_score, balance
-    player_score = calculate_deck(player)
-    # @TODO might need to delete for dealer's hidden card
-    deck_stats(player, player_score)
+    global player_score, dealer_score, balance
+    player_score = calculate_deck(player)  # print first outside of the loop?
+    dealer_score = calculate_deck(dealer)
+    deck_stats(dealer, dealer_score)
+    # @TODO might need to delete for dealer's hidden card.. or just use different array
     if player_score == 21:  # automatic win.
         balance += (bet * 1.5)
     else:
         # @TODO How to keep looping while hitting and player score is less than 21
         while player_score < 21:  # or hitorstand().startswith("h"):  # @TODO maybe 'and' instead of or?
-            hitorstand()
-            player_score = calculate_deck(player)
+            print("a")
             deck_stats(player, player_score)
-        cpu_score = calculate_deck(cpu)
+            print("b")
+            if hitorstand().startswith("s"):  # choosing to stand. break the loop
+                break
+            else:
+                new_card(player)
+            player_score = calculate_deck(player)
+        if player_score > 21:
+            print("You have busted! You lost this round.")
+            return
+        dealer.append(dealer_hidden.pop(0))
+        print("The dealer has revealed their hidden card.")
+        dealer_score = calculate_deck(dealer)
+        deck_stats(dealer, dealer_score)
+        while dealer_score <= 16:
+            # @TODO paste the previous
+
+            dealer_score = calculate_deck(dealer)
+        if dealer_score > 21:
+            print("The dealer has busted! You win twice your bet.")
+            balance += (bet * 2)
 
 
 def new_card(deck):
-    print("DEBUGGING: " + str(len(cards)))
+    print("NEW CARD: " + str(len(cards)))
     index = random.randint(0, len(cards) - 1)  # random card.
     deck.append(cards.pop(index))
 
@@ -101,16 +124,28 @@ def calculate_deck(deck):
 
 
 def deck_stats(deck, score):
-    print("Your current deck: ", end="")
+    prefix = "Your"
+    if deck == dealer:
+        prefix = "Dealer's"
+    print("\n" + prefix + " current deck: ", end="")
     print(deck)
-    print("Your current deck value: " + str(score))
+    print("{} current deck value: {}\n".format(prefix, str(score)))
 
 
 def main():
     rounds = 0  # rounds elapsed
     while True:
-        new_round(rounds)
-        rounds += 1
+        if balance > 0:
+            new_round(rounds)
+            rounds += 1
+            if balance > 0:
+                keep_going = input("Would you like to keep going? ")
+                if not keep_going.lower().startswith("y"):
+                    break  # user has chosen to manually end the game
+        elif balance <= 0:
+            print("You have an invalid balance!")
+            break
+    print("GG! The game of Blackjack has ended.")
 
 
 if __name__ == "__main__":
