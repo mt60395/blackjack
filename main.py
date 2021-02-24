@@ -90,8 +90,8 @@ def new_round(rounds):  # this function has the main logic of the game
                 break
             else:
                 new_card(player)
-                deck_stats(player, player_score)
             player_score = calculate_deck(player)
+            deck_stats(player, player_score)
         if player_score > 21:
             print("You have busted! You lost this round.")
             return
