@@ -41,7 +41,7 @@ def hitorstand():
     return valid_option
 
 
-def refresh_deck():
+def refresh():  # Refreshes the deck and player's scores. Scores are added to, not calculated per deck.
     # Add the numbered ranks before the special ranks
     global cards
     cards = []
@@ -50,36 +50,27 @@ def refresh_deck():
         for j in ranks:
             cards.append(j + " of " + i)
 
-    global player, dealer
+    global player, dealer, player_score, dealer_score
     player = []
     dealer = []
+    player_score = 0
+    dealer_score = 0
 
 
 def new_round(rounds):  # this function has the main logic of the game
     print("Round " + str(rounds))
     make_bet()
-    refresh_deck()
-    # Usually, if there are multiple players, the dealer hands out 2 cards to each player before he gets a hidden card.
-    new_card(player)
-    new_card(dealer)
-    new_card(player)
-    new_card(dealer_hidden)
-
-    # Choose the value of an Ace card.
-    ace_value = -1
-    while ace_value == -1:
-        option = input("Choose the value of an Ace (1 or 11): ")
-        if option == "1":
-            ace_value = 1
-        elif option == "11":
-            ace_value = 11
-    rank_values[len(rank_values) - 1] = ace_value  # set the new ace value. The list is read from later
-
+    refresh()
     global player_score, dealer_score, balance
-    player_score = calculate_deck(player)  # print first outside of the loop?
-    dealer_score = calculate_deck(dealer)
+    # Usually, if there are multiple players, the dealer hands out 2 cards to each player before he gets a hidden card.
+    player_score += new_card(player)
+    dealer_score += new_card(dealer)
+    player_score += new_card(player)
+    hidden_score = new_card(dealer_hidden)
+
+    print()
     deck_stats(dealer, dealer_score)
-    # @TODO might need to delete for dealer's hidden card.. or just use different array
+
     if player_score == 21:  # automatic win.
         balance += (bet * 1.5)
     else:
@@ -89,51 +80,67 @@ def new_round(rounds):  # this function has the main logic of the game
             if hitorstand().startswith("s"):  # choosing to stand. break the loop
                 break
             else:
-                new_card(player)
-            player_score = calculate_deck(player)
-            deck_stats(player, player_score)
+                player_score += new_card(player)
         if player_score > 21:
             print("You have busted! You lost this round.")
             return
         dealer.append(dealer_hidden.pop(0))
         print("The dealer has revealed their hidden card.")
-        dealer_score = calculate_deck(dealer)
+        dealer_score += hidden_score
         deck_stats(dealer, dealer_score)
         while dealer_score <= 16:  # dealer must stay with their hand if the value is 17+. else, keep drawing
-            new_card(dealer)
-            dealer_score = calculate_deck(dealer)
+            dealer_score += new_card(dealer)
             deck_stats(dealer, dealer_score)
         if dealer_score > 21:
             print("The dealer has busted! You win twice your bet.")
             balance += (bet * 2)
         else:
             if player_score > dealer_score:
-                print("You have won the round! Your deck totaled up to {} and was higher than the dealer's score, {}!".format(player_score, dealer_score))
+                # @TODO Make sure the print formatting works in repl.it
+                print(
+                    "You have won the round! Your deck totaled up to {} and was higher than the dealer's score, {}!".format(
+                        player_score, dealer_score))
                 balance += (bet * 2)
             else:
-                print("You have lost the round. Your deck totaled up to {} and was not higher than the dealer's score, {}.".format(player_score, dealer_score))
+                print(
+                    "You have lost the round. Your deck totaled up to {} and was not higher than the dealer's score, "
+                    "{}.".format(
+                        player_score, dealer_score))
 
 
-def new_card(deck):
+def new_card(deck):  # Add a new card to the deck and return its value.
     index = random.randint(0, len(cards) - 1)  # random card.
-    deck.append(cards.pop(index))
+    card = cards.pop(index)
+    deck.append(card)
 
-
-def calculate_deck(deck):
-    score = 0
-    for card in deck:
-        card_info = card.split(" of ")  # will split into [value, suit]
-        rank_index = ranks.index(card_info[0])
-        score += rank_values[rank_index]
-        # the index of the card in the ranks corresponds with it's value in the second list, value
-    return score
+    card_info = card.split(" of ")  # will split into [value, suit]
+    rank_index = ranks.index(card_info[0])
+    value = rank_values[rank_index]
+    # the index of the card in the ranks corresponds with it's value in the second list, value
+    if deck == player:
+        print("You have drawn a new card: " + card)
+        if value == 11:  # Choose the new value of an Ace.
+            # This selection is made on the inside because the print needs to occur.
+            ace_value = -1
+            while ace_value == -1:
+                option = input("Choose the value of an Ace (1 or 11): ")
+                if option == "1":
+                    ace_value = 1
+                elif option == "11":
+                    ace_value = 11
+    else:
+        if value == 11:
+            if dealer_score + 11 > 21:
+                value = 1
+            # Else, it can be 11, and that already is the set default value
+    return value
 
 
 def deck_stats(deck, score):  # prints out the current deck of either the player or dealer and also prints the score
     prefix = "Your"
     if deck == dealer:
         prefix = "Dealer's"
-    print("\n" + prefix + " current deck: ", end="")
+    print(prefix + " current deck: ", end="")
     print(deck)
     print("{} current deck value: {}\n".format(prefix, str(score)))
 
@@ -151,7 +158,7 @@ def main():
         elif balance <= 0:
             print("You have an invalid balance!")
             break
-    print("GG! The game of Blackjack has ended.")
+    print("GG! The game of Blackjack has ended. You ended with: $" + str(balance))
 
 
 if __name__ == "__main__":
