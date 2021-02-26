@@ -128,6 +128,7 @@ def new_card(deck):  # Add a new card to the deck and return its value.
                     ace_value = 1
                 elif option == "11":
                     ace_value = 11
+            value = ace_value
     else:
         if value == 11:
             if dealer_score + 11 > 21:
