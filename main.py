@@ -76,7 +76,7 @@ def new_round(rounds):  # this function has the main logic of the game
     if player_score == 21:  # automatic win.
         balance += (bet * 1.5)
     else:
-        while player_score < 21:  # repeat until one has busted
+        while player_score <= 21:  # repeat until one has busted
             deck_stats(player, player_score)
             if hitorstand().startswith("s"):  # choosing to stand. break the loop. no more cards drawn for the round
                 break
